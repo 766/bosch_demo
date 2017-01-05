@@ -1,19 +1,35 @@
 <!DOCTYPE html>
 <html lang="zh-cn">
+
 <head>
     <meta charset="UTF-8">
     <title>Document</title>
+    <style>
+     .chart{
+      width: 600px;
+      height: 400px;
+      float: left;
+     }
+    </style>
 </head>
-<body>
-<div id="config">
-    <label for="hub_ip"></label><input id="hub_ip" placeholder="please type the hub ip">
-    <label for="device_mac"></label><input id="device_mac" placeholder="please type the device mac">
-    <button id="connect">connect</button>
-</div>
-<div id="main" style="width: 600px;height:400px;"></div>
 
-<script src="js/echarts.js"></script>
-<script src='js/api.js'></script>
-<script src='js/index.js'></script>
+<body>
+    <div id="config">
+        <label for="hub_ip"></label><input id="hub_ip" placeholder="please type the hub ip" value="192.168.199.239">
+        <label for="device_mac"></label><input id="device_mac" placeholder="please type the device mac" value="FC:D6:BD:10:09:B9">
+        <button id="connect">connect</button>
+    </div>
+    <div id="acc" class='chart'></div>
+    <div id="gyro" class='chart'></div>
+    <div id="light" class='chart'></div>
+    <div id="noise" class='chart'></div>
+    <div id="temperature" class='chart'></div>
+    <div id="hum" class='chart'></div>
+    <div id="pressure" class='chart'></div>
+    <script src='js/zepto.js'></script>
+    <script src="js/echarts.js"></script>
+    <script src='js/api.js'></script>
+    <script src='js/index.js'></script>
 </body>
+
 </html>

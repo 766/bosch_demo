@@ -28,7 +28,7 @@ let pressureDate = [];
 //***chart options*****//
 let tooltip = {
     trigger: 'axis',
-    formatter: function (params) {
+    formatter: function(params) {
         params = params[0];
         let date = new Date(params.name);
         return date.getHours() + ':' + date.getMinutes() + ':' + date.getSeconds() + '</br>' + params.value;
@@ -46,11 +46,12 @@ let xAxis = {
     type: 'category',
     boundaryGap: false,
     axisLabel: {
-        formatter: function (value, idx) {
+        formatter: function(value, idx) {
             let date = new Date(value);
             return [date.getMonth() + 1, date.getDate()].join('-');
         }
-    }, data: []
+    },
+    data: []
 };
 
 let yAxis = {
@@ -67,7 +68,7 @@ accChart.setOption({
     },
     tooltip: {
         trigger: 'axis',
-        formatter: function (params) {
+        formatter: function(params) {
             params = params[0];
             let date = new Date(params.name);
             return date.getHours() + ':' + date.getMinutes() + ':' + date.getSeconds() + '</br>' + params.value;
@@ -165,12 +166,13 @@ function getIpMac() {
     devicesMac = $('#device_mac').val().trim()
     if (!reg_ip.test(hubIP) || !reg_mac.test(devicesMac)) {
         alert('hubIP或者MAC输入错误')
-        return
+        return false
     }
     localStorage.setItem('bosch', JSON.stringify([hubIP, devicesMac]))
+    return true
 }
 
-let dataHandle = function (hub, data) {
+let dataHandle = function(hub, data) {
     if (data !== ':keep-alive') {
         _data = JSON.parse(data)
         dd = (dataParse(_data.value))
@@ -178,35 +180,41 @@ let dataHandle = function (hub, data) {
     }
 }
 
-getIpMac()
-api
-    .use({
-        server: hubIP,
-        hub: ''
-    })
-    .on('notify', dataHandle)
-$('#disconnect').on('click', function () {
-    getIpMac()
+
+
+$('#disconnect').on('click', function() {
+    if (!getIpMac()) {
+        return
+    }
     api
         .use({
             server: hubIP,
             hub: ''
-        }).disconn({
-        node: devicesMac
-    })
+        })    
+        .disconn({
+            node: devicesMac
+        })
 })
 
 
-body.delegate('#connect', 'click', function () {
+body.delegate('#connect', 'click', function() {
     //此接口用于连接设备
     console.log('connect clicked');
-    getIpMac()
-    api.on('conn', writeSpecialValue)
+    if (!getIpMac()) {
+        return
+    }
+    api
+        .use({
+            server: hubIP,
+            hub: ''
+        })
+        .on('notify', dataHandle)
+        .on('conn', writeSpecialValue)
         .conn({
             node: devicesMac,
             type: 'public'
         })
-    
+
 });
 
 function fillData(dataArr, timeArr, data, time) {
@@ -217,6 +225,7 @@ function fillData(dataArr, timeArr, data, time) {
     dataArr.push(data);
     timeArr.push(time);
 }
+
 function refChart(type) {
     switch (type) {
         case 'ag':
@@ -224,19 +233,25 @@ function refChart(type) {
                 xAxis: {
                     data: accDate
                 },
-                series: [
-                    {data: accxData},
-                    {data: accyData},
-                    {data: acczData}]
+                series: [{
+                    data: accxData
+                }, {
+                    data: accyData
+                }, {
+                    data: acczData
+                }]
             });
             gyroChart.setOption({
                 xAxis: {
                     data: gyroDate
                 },
-                series: [
-                    {data: gyroxData},
-                    {data: gyroyData},
-                    {data: gyrozData}]
+                series: [{
+                    data: gyroxData
+                }, {
+                    data: gyroyData
+                }, {
+                    data: gyrozData
+                }]
             });
             break;
         case 'en':
@@ -264,7 +279,7 @@ function refChart(type) {
                     data: temperatureData
                 }]
             });
-            
+
             humChart.setOption({
                 xAxis: {
                     data: humDate
@@ -286,6 +301,7 @@ function refChart(type) {
             break
     }
 }
+
 function notify(value) {
     //收到数据后调用这个接口通知我
     if (accDate.length >= 50) {
@@ -294,14 +310,14 @@ function notify(value) {
         acczData.shift();
         accDate.shift();
     }
-    
+
     if (gyroDate.length >= 50) {
         gyroxData.shift();
         gyroyData.shift();
         gyrozData.shift();
         gyroDate.shift();
     }
-    
+
     if (lightData.length >= 50) {
         lightData.shift();
         lightDate.shift();
@@ -320,12 +336,12 @@ function notify(value) {
             accxData.push(value.acc[0])
             accyData.push(value.acc[1])
             acczData.push(value.acc[2])
-            
+
             gyroDate.push(value.time);
             gyroxData.push(value.gyro[0])
             gyroyData.push(value.gyro[1])
             gyrozData.push(value.gyro[2])
-            
+
             refChart(value.type);
             break;
         case 'en':
@@ -340,20 +356,18 @@ function notify(value) {
             humDate.push(time);
             pressureData.push(value.pressure);
             pressureDate.push(time);
-            
+
             refChart(value.type);
             break;
         case 'ma':
             break;
-        
+
     }
 }
 
-function limitDataLength(arr, length) {
-    
-}
 
-let writeSpecialValue = function (e, args) {
+
+let writeSpecialValue = function(e, args) {
     api.write({
         node: devicesMac,
         handle: 57,
@@ -371,22 +385,22 @@ let writeSpecialValue = function (e, args) {
     })
 };
 
-let dataParse = function (str) {
-    let splitString = function (str, byte1, byte2) {
+let dataParse = function(str) {
+    let splitString = function(str, byte1, byte2) {
         function sum(arr, index) {
             let _arr = arr.slice(0, index)
             if (_arr.length !== 0) {
-                return _arr.reduce(function (prev, cur, index, arr) {
+                return _arr.reduce(function(prev, cur, index, arr) {
                     return prev + cur
                 })
             }
             return 0
         }
-        
+
         let temp = [],
             byteArr = Array.prototype.slice.call(arguments, 1),
             length = byteArr.length
-        byteArr = byteArr.map(function (item) {
+        byteArr = byteArr.map(function(item) {
             return item * 2
         })
         for (let i = 0; i < length; i++) {
@@ -394,8 +408,8 @@ let dataParse = function (str) {
         }
         return temp
     }
-    
-    
+
+
     let _data = null,
         hiData = [],
         lowData1 = [],
@@ -413,11 +427,11 @@ let dataParse = function (str) {
         magnetometerR = [],
         ledStatus = [],
         temp = str.substr(0, 2)
-    
-    
+
+
     if (temp === '01') {
         lowData1.push(str.substring(2))
-        lowData1.forEach(function (item, index) {
+        lowData1.forEach(function(item, index) {
             let temp = splitString(item, 4, 1, 4, 4, 4, 1, 1)
             light.push(temp[0])
             noise.push(temp[1])
@@ -436,11 +450,11 @@ let dataParse = function (str) {
             hum: hum[0],
             temperature: temperature[0]
         }
-        
+
     }
     if (temp === '02') {
         lowData2.push(str.substring(2))
-        lowData2.forEach(function (item, index) {
+        lowData2.forEach(function(item, index) {
             let temp = splitString(item, 2, 2, 2, 2, 1)
             magnetometer.push({
                 x: temp[0],
@@ -457,9 +471,9 @@ let dataParse = function (str) {
             mar: magnetometerR[0]
         }
     }
-    
+
     hiData.push(str)
-    hiData.forEach(function (item, index) {
+    hiData.forEach(function(item, index) {
         acc.push({
             x: parseInt(item.substr(0, 4), 16),
             y: parseInt(item.substr(4, 4), 16),

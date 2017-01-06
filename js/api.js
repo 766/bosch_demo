@@ -4,7 +4,9 @@
  * CESDemo
  */
 (function(G) {
-    let api = {}
+    let api = {sse:{}}
+    api.sse.scan=false
+    api.sse.notify=false
     let __es = function(target, url, fn) {
         let es = target.es = new EventSource(String(url));
         es.onmessage = function(event) {
@@ -73,7 +75,8 @@
     }
     api.on = function(e, fn) {
         api.on[e] = fn
-        if (e == 'notify') {
+        if (e == 'notify' && !api.sse.notify) {
+            api.sse.notify=true
             api.notify(true)
         }
         return api
@@ -82,6 +85,7 @@
         api.on[e] = null
         delete api.on[e]
         if (e == 'notify') {
+            api.sse.notify=false
             api.notify(false)
         }
         return api
@@ -216,11 +220,13 @@
 
     api.notify = function(toggle) {
         if (toggle) {
+            api.sse.notify=true
             __es(api.notify, api.server + '/gatt/nodes/?event=1&mac=' + api.hub + '&access_token=' + api.access_token,
                 function(event) {
                     api.trigger('notify', [api.hub, event.data])
                 })
         } else {
+            api.sse.notify=false
             __es.close(api.notify)
         }
         return api

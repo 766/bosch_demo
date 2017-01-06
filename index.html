@@ -5,32 +5,50 @@
     <meta charset="UTF-8">
     <title>Document</title>
     <style>
-     .chart{
-      width: 600px;
-      height: 400px;
-      float: left;
-     }
+        .chart-style {
+            width: 400px;
+            height: 300px;
+            float: left;
+        }
+        
+        .body-style {
+            filter: alpha(opacity=10);
+            -moz-opacity: 0.1;
+            -khtml-opacity: 0.1;
+            opacity: 0.1;
+            height: 100%;
+            width: 100%;
+            position: absolute;
+            background: url('boschLogo.png') no-repeat  left top;
+            z-index: -1;
+        }
     </style>
 </head>
 
 <body>
+<div class="body-style">
+</div>
+<div style="z-index: 2;opacity: 1">
     <div id="config">
         <label for="hub_ip"></label><input id="hub_ip" placeholder="please type the hub ip">
         <label for="device_mac"></label><input id="device_mac" placeholder="please type the device mac">
         <button id="connect">connect</button>
         <button id="disconnect">disconnect</button>
     </div>
-    <div id="acc" class='chart'></div>
-    <div id="gyro" class='chart'></div>
-    <div id="light" class='chart'></div>
-    <div id="noise" class='chart'></div>
-    <div id="temperature" class='chart'></div>
-    <div id="hum" class='chart'></div>
-    <div id="pressure" class='chart'></div>
-    <script src='js/zepto.js'></script>
-    <script src="js/echarts.js"></script>
-    <script src='js/api.js'></script>
-    <script src='js/index.js'></script>
+    <div id="acc" class='chart-style'></div>
+    <div id="gyro" class='chart-style'></div>
+    <div id="light" class='chart-style'></div>
+    <div id="noise" class='chart-style'></div>
+    <div id="temperature" class='chart-style'></div>
+    <div id="hum" class='chart-style'></div>
+    <div id="pressure" class='chart-style'></div>
+
+</div>
+
+<script src='js/zepto.js'></script>
+<script src="js/echarts.js"></script>
+<script src='js/api.js'></script>
+<script src='js/index.js'></script>
 </body>
 
 </html>

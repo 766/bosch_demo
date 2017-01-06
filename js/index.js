@@ -37,27 +37,54 @@ myChart1.setOption(option);
 var body = $('body')
 var hubIP = '',
 	devicesMac = '',
-	reg_ip = /(\d+)\.(\d+)\.(\d+)\.(\d+)/g,
-	reg_mac = /[1-f]{2}\:[1-f]{2}\:[1-f]{2}\:[1-f]{2}\:[1-f]{2}\:[1-f]{2}/gi;
-var dd
-body.delegate('#connect', 'click', function () {
-	//此接口用于连接设备
-	console.log('connect clicked');
+	reg_ip = /^(\d+)\.(\d+)\.(\d+)\.(\d+)$/,
+	reg_mac = /^[0-f]{2}\:[0-f]{2}\:[0-f]{2}\:[0-f]{2}\:[0-f]{2}\:[0-f]{2}$/i;
+var dd, bosch = null;
+
+if (localStorage.bosch) {
+	bosch = JSON.parse(localStorage.bosch)
+	if (reg_ip.test(bosch[0]) && reg_mac.test(bosch[1])) {
+		$('#hub_ip').val(bosch[0])
+		$('#device_mac').val(bosch[1])
+	}
+}
+
+function getIpMac() {
 	hubIP = $('#hub_ip').val().trim()
 	devicesMac = $('#device_mac').val().trim()
-	// if (!reg_ip.test(hubIP) || !reg_mac.test(devicesMac))
-	//  {
-	// 	alert('hubIP或者MAC输入错误')
-	// 	return
-	// }
+	if (!reg_ip.test(hubIP) || !reg_mac.test(devicesMac)) {
+		alert('hubIP或者MAC输入错误')
+		return
+	}
+	localStorage.setItem('bosch', JSON.stringify([hubIP, devicesMac]))
+}
 
+
+getIpMac()
+api
+	.use({
+		server: hubIP,
+		hub: ''
+	})
+	.on('notify', dataHandle)
+$('#disconnect').on('click', function() {
+	getIpMac()
 	api
 		.use({
 			server: hubIP,
 			hub: ''
+		}).disconn({
+			node: devicesMac
 		})
-		.on('notify', dataHandle)
-		.on('conn', writeSpecialValue)
+})
+
+
+
+body.delegate('#connect', 'click', function() {
+	//此接口用于连接设备
+	console.log('connect clicked');
+	getIpMac()
+	api.on('conn', writeSpecialValue)
 		.conn({
 			node: devicesMac,
 			type: 'public'
@@ -74,7 +101,7 @@ function notify(value) {
 	// data.shift();
 	// date.shift();
 	// data.push(randomData());
-	
+
 
 
 	myChart0.setOption({
@@ -99,7 +126,7 @@ function notify(value) {
 
 
 
-var writeSpecialValue = function (e, args) {
+var writeSpecialValue = function(e, args) {
 	api.write({
 		node: devicesMac,
 		handle: 57,
@@ -117,7 +144,7 @@ var writeSpecialValue = function (e, args) {
 	})
 }
 
-var dataHandle = function (hub, data) {
+var dataHandle = function(hub, data) {
 	if (data !== ':keep-alive') {
 		_data = JSON.parse(data)
 		dd = (dataParse(_data.value))
@@ -125,12 +152,12 @@ var dataHandle = function (hub, data) {
 	}
 }
 
-var dataParse = function (str) {
-	var splitString = function (str, byte1, byte2) {
+var dataParse = function(str) {
+	var splitString = function(str, byte1, byte2) {
 		function sum(arr, index) {
 			var _arr = arr.slice(0, index)
 			if (_arr.length !== 0) {
-				return _arr.reduce(function (prev, cur, index, arr) {
+				return _arr.reduce(function(prev, cur, index, arr) {
 					return prev + cur
 				})
 			}
@@ -139,7 +166,7 @@ var dataParse = function (str) {
 		var temp = [],
 			byteArr = Array.prototype.slice.call(arguments, 1),
 			length = byteArr.length
-		byteArr = byteArr.map(function (item) {
+		byteArr = byteArr.map(function(item) {
 			return item * 2
 		})
 		for (var i = 0; i < length; i++) {
@@ -171,7 +198,7 @@ var dataParse = function (str) {
 
 	if (temp === '01') {
 		lowData1.push(str.substring(2))
-		lowData1.forEach(function (item, index) {
+		lowData1.forEach(function(item, index) {
 			var temp = splitString(item, 4, 1, 4, 4, 4, 1, 1)
 			light.push(temp[0])
 			noise.push(temp[1])
@@ -194,7 +221,7 @@ var dataParse = function (str) {
 	}
 	if (temp === '02') {
 		lowData2.push(str.substring(2))
-		lowData2.forEach(function (item, index) {
+		lowData2.forEach(function(item, index) {
 			var temp = splitString(item, 2, 2, 2, 2, 1)
 			magnetometer.push({
 				x: temp[0],
@@ -213,7 +240,7 @@ var dataParse = function (str) {
 	}
 
 	hiData.push(str)
-	hiData.forEach(function (item, index) {
+	hiData.forEach(function(item, index) {
 		acc.push({
 			x: parseInt(item.substr(0, 4), 16),
 			y: parseInt(item.substr(4, 4), 16),

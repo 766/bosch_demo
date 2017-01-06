@@ -121,6 +121,22 @@
         })
         return api
     }
+    api.disconn = function(o) {
+        o = o || {}
+        $.ajax({
+            type: 'delete',
+            url: api.server + '/gap/nodes/' + o.node + '/connection?mac=' + (o.hub || api.hub),
+            headers: api.local ? '' : {
+                'Authorization': api.authorization
+            },
+            success: function(data) {
+                console.log(data)
+                o.success && o.success(o.hub || api.hub, o.node, data)
+                api.trigger('disconn', [o.hub || api.hub, o.node, data])
+            }
+        })
+        return api
+    }
     api.conn.close = function(o) {
         o = o || {}
         $.ajax({

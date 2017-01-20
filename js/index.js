@@ -101,7 +101,7 @@ gyroChart.setOption({
 });
 lightChart.setOption({
     title: {
-        text: '光照'
+        text: '光照(lux)'
     },
     tooltip: tooltip,
     xAxis: xAxis,
@@ -119,7 +119,7 @@ noiseChart.setOption({
 });
 temperatureChart.setOption({
     title: {
-        text: '温度'
+        text: '温度(℃)'
     },
     tooltip: tooltip,
     xAxis: xAxis,
@@ -128,7 +128,7 @@ temperatureChart.setOption({
 });
 humChart.setOption({
     title: {
-        text: '湿度'
+        text: '湿度(%)'
     },
     tooltip: tooltip,
     xAxis: xAxis,
@@ -137,7 +137,7 @@ humChart.setOption({
 });
 pressureChart.setOption({
     title: {
-        text: '压力'
+        text: '压力(kPa)'
     },
     tooltip: tooltip,
     xAxis: xAxis,
@@ -190,7 +190,7 @@ $('#disconnect').on('click', function() {
         .use({
             server: hubIP,
             hub: ''
-        })    
+        })
         .disconn({
             node: devicesMac
         })
@@ -386,6 +386,14 @@ let writeSpecialValue = function(e, args) {
 };
 
 let dataParse = function(str) {
+    let reverseByte = function(str) {
+        let temp = '',
+            i = str.length
+        for (i; i >= 2; i -= 2) {
+            temp += str[i - 2] + str[i - 1]
+        }
+        return temp
+    }
     let splitString = function(str, byte1, byte2) {
         function sum(arr, index) {
             let _arr = arr.slice(0, index)
@@ -404,10 +412,11 @@ let dataParse = function(str) {
             return item * 2
         })
         for (let i = 0; i < length; i++) {
-            temp.push(parseInt(str.substr(sum(byteArr, i), byteArr[i]), 16))
+            temp.push(parseInt(reverseByte(str.substr(sum(byteArr, i), byteArr[i])), 16))
         }
         return temp
     }
+
 
 
     let _data = null,
@@ -433,10 +442,10 @@ let dataParse = function(str) {
         lowData1.push(str.substring(2))
         lowData1.forEach(function(item, index) {
             let temp = splitString(item, 4, 1, 4, 4, 4, 1, 1)
-            light.push(temp[0])
+            light.push(temp[0] / 1000)
             noise.push(temp[1])
-            pressure.push(temp[2])
-            temperature.push(temp[3])
+            pressure.push(temp[2] / 1000)
+            temperature.push(temp[3] / 1000)
             hum.push(temp[4])
             sdCard.push(temp[5])
             buttonStatus.push(temp[6])
@@ -463,7 +472,13 @@ let dataParse = function(str) {
             })
             magnetometerR.push(temp[3])
             ledStatus.push(temp[4])
+            console.log('Ma', {
+                x: temp[0],
+                y: temp[1],
+                z: temp[2]
+            })
         })
+
         return {
             time: new Date().getTime(),
             type: 'ma',
@@ -475,16 +490,29 @@ let dataParse = function(str) {
     hiData.push(str)
     hiData.forEach(function(item, index) {
         acc.push({
-            x: parseInt(item.substr(0, 4), 16),
-            y: parseInt(item.substr(4, 4), 16),
-            z: parseInt(item.substr(8, 4), 16)
+            x: parseInt(reverseByte(item.substr(0, 4)), 16) / 1000,
+            y: parseInt(reverseByte(item.substr(4, 4)), 16) / 1000,
+            z: parseInt(reverseByte(item.substr(8, 4)), 16) / 1000
         })
+        console.log('acc', {
+            x: parseInt(reverseByte(item.substr(0, 4)), 16) / 1000,
+            y: parseInt(reverseByte(item.substr(4, 4)), 16) / 1000,
+            z: parseInt(reverseByte(item.substr(8, 4)), 16) / 1000
+        });
         gyro.push({
-            x: parseInt(item.substr(12, 4), 16),
-            y: parseInt(item.substr(16, 4), 16),
-            z: parseInt(item.substr(20, 4), 16)
+            x: parseInt(reverseByte(item.substr(12, 4)), 16)/1000,
+            y: parseInt(reverseByte(item.substr(16, 4)), 16)/1000,
+            z: parseInt(reverseByte(item.substr(20, 4)), 16)/1000
         })
+
+
+        console.log('gyro', {
+            x: parseInt(reverseByte(item.substr(12, 4)), 16)/1000,
+            y: parseInt(reverseByte(item.substr(16, 4)), 16)/1000,
+            z: parseInt(reverseByte(item.substr(20, 4)), 16)/1000
+        });
     })
+
     return {
         time: new Date().getTime(),
         type: 'ag',

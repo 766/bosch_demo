@@ -385,6 +385,14 @@ function notify(value) {
         pressureData.shift();
         pressureDate.shift();
     }
+    
+    if (magneticxData.length >= 50) {
+        magnetometerRData.shift();
+        magneticxData.shift();
+        magneticyData.shift();
+        magneticzData.shift();
+        magneticDate.shift();
+    }
     let date = new Date(value.time);
     let dateStr = [date.getHours(), date.getMinutes(), date.getSeconds()].join(':');
     switch (value.type) {

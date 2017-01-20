@@ -28,11 +28,11 @@ let pressureDate = [];
 //***chart options*****//
 let tooltip = {
     trigger: 'axis',
-    formatter: function(params) {
-        params = params[0];
-        let date = new Date(params.name);
-        return date.getHours() + ':' + date.getMinutes() + ':' + date.getSeconds() + '</br>' + params.value;
-    },
+    // formatter: function (params) {
+    //     params = params[0];
+    //     let date = new Date(params.name);
+    //     return date.getHours() + ':' + date.getMinutes() + ':' + date.getSeconds() + '</br>' ;
+    // },
 };
 
 let grid = {
@@ -45,12 +45,6 @@ let grid = {
 let xAxis = {
     type: 'category',
     boundaryGap: false,
-    axisLabel: {
-        formatter: function(value, idx) {
-            let date = new Date(value);
-            return [date.getMonth() + 1, date.getDate()].join('-');
-        }
-    },
     data: []
 };
 
@@ -68,19 +62,22 @@ accChart.setOption({
     },
     tooltip: {
         trigger: 'axis',
-        formatter: function(params) {
-            params = params[0];
-            let date = new Date(params.name);
-            return date.getHours() + ':' + date.getMinutes() + ':' + date.getSeconds() + '</br>' + params.value;
-        },
+    },
+    legend: {
+        data: ['x', 'y', 'z']
     },
     xAxis: xAxis,
-    yAxis: yAxis,
+    yAxis: {
+        name: 'm/s2'
+    },
     series: [{
+        name: 'x',
         type: 'line'
     }, {
+        name: 'y',
         type: 'line'
     }, {
+        name: 'z',
         type: 'line'
     }]
 });
@@ -90,12 +87,17 @@ gyroChart.setOption({
     },
     tooltip: tooltip,
     xAxis: xAxis,
-    yAxis: yAxis,
+    yAxis: {
+        name: 'm/s2'
+    },
     series: [{
+        name: 'x',
         type: 'line'
     }, {
+        name: 'y',
         type: 'line'
     }, {
+        name: 'z',
         type: 'line'
     }]
 });
@@ -105,7 +107,9 @@ lightChart.setOption({
     },
     tooltip: tooltip,
     xAxis: xAxis,
-    yAxis: yAxis,
+    yAxis: {
+        name: 'lux'
+    },
     series: series
 });
 noiseChart.setOption({
@@ -114,7 +118,9 @@ noiseChart.setOption({
     },
     tooltip: tooltip,
     xAxis: xAxis,
-    yAxis: yAxis,
+    yAxis: {
+        name: 'dB'
+    },
     series: series
 });
 temperatureChart.setOption({
@@ -123,7 +129,9 @@ temperatureChart.setOption({
     },
     tooltip: tooltip,
     xAxis: xAxis,
-    yAxis: yAxis,
+    yAxis: {
+        name: '℃'
+    },
     series: series
 });
 humChart.setOption({
@@ -132,7 +140,9 @@ humChart.setOption({
     },
     tooltip: tooltip,
     xAxis: xAxis,
-    yAxis: yAxis,
+    yAxis: {
+        name: 'rh%'
+    },
     series: series
 });
 pressureChart.setOption({
@@ -141,7 +151,9 @@ pressureChart.setOption({
     },
     tooltip: tooltip,
     xAxis: xAxis,
-    yAxis: yAxis,
+    yAxis: {
+        name: 'kPa'
+    },
     series: series
 });
 
@@ -330,14 +342,17 @@ function notify(value) {
         pressureData.shift();
         pressureDate.shift();
     }
+    let date = new Date(value.time);
+    let dateStr = [date.getHours(), date.getMinutes(), date.getSeconds()].join(':');
     switch (value.type) {
+        
         case 'ag':
-            accDate.push(value.time);
+            accDate.push(dateStr);
             accxData.push(value.acc[0])
             accyData.push(value.acc[1])
             acczData.push(value.acc[2])
-
-            gyroDate.push(value.time);
+            
+            gyroDate.push(dateStr);
             gyroxData.push(value.gyro[0])
             gyroyData.push(value.gyro[1])
             gyrozData.push(value.gyro[2])
@@ -345,18 +360,17 @@ function notify(value) {
             refChart(value.type);
             break;
         case 'en':
-            let time = value.time;
             lightData.push(value.light);
-            lightDate.push(time);
+            lightDate.push(dateStr);
             noiseData.push(value.noise);
-            noiseDate.push(time);
+            noiseDate.push(dateStr);
             temperatureData.push(value.temperature);
-            temperatureDate.push(time);
+            temperatureDate.push(dateStr);
             humData.push(value.hum);
-            humDate.push(time);
+            humDate.push(dateStr);
             pressureData.push(value.pressure);
-            pressureDate.push(time);
-
+            pressureDate.push(dateStr);
+            
             refChart(value.type);
             break;
         case 'ma':

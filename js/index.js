@@ -103,7 +103,7 @@ gyroChart.setOption({
 });
 lightChart.setOption({
     title: {
-        text: '光照(lux)'
+        text: '光照'
     },
     tooltip: tooltip,
     xAxis: xAxis,
@@ -125,7 +125,7 @@ noiseChart.setOption({
 });
 temperatureChart.setOption({
     title: {
-        text: '温度(℃)'
+        text: '温度'
     },
     tooltip: tooltip,
     xAxis: xAxis,
@@ -136,7 +136,7 @@ temperatureChart.setOption({
 });
 humChart.setOption({
     title: {
-        text: '湿度(%)'
+        text: '湿度'
     },
     tooltip: tooltip,
     xAxis: xAxis,
@@ -147,7 +147,7 @@ humChart.setOption({
 });
 pressureChart.setOption({
     title: {
-        text: '压力(kPa)'
+        text: '压力'
     },
     tooltip: tooltip,
     xAxis: xAxis,

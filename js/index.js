@@ -5,6 +5,7 @@ let noiseChart = echarts.init(document.getElementById('noise'));
 let temperatureChart = echarts.init(document.getElementById('temperature'));
 let humChart = echarts.init(document.getElementById('hum'));
 let pressureChart = echarts.init(document.getElementById('pressure'));
+let magneticChart = echarts.init(document.getElementById('magnetic'));
 let accxData = [];
 let accyData = [];
 let acczData = [];
@@ -25,6 +26,12 @@ let humData = [];
 let humDate = [];
 let pressureData = [];
 let pressureDate = [];
+let magneticDate = [];
+let magneticxData = [];
+let magneticyData = [];
+let magneticzData = [];
+let magnetometerRData = [];
+
 //***chart options*****//
 let tooltip = {
     trigger: 'axis',
@@ -156,6 +163,29 @@ pressureChart.setOption({
     },
     series: series
 });
+magneticChart.setOption({
+    title: {
+        text: '磁感'
+    },
+    tooltip: tooltip,
+    xAxis: xAxis,
+    yAxis: {
+        name: 'T'
+    },
+    series: [{
+        name: 'x',
+        type: 'line'
+    }, {
+        name: 'y',
+        type: 'line'
+    }, {
+        name: 'z',
+        type: 'line'
+    }, {
+        name: 'r',
+        type: 'line'
+    }]
+});
 
 
 let body = $('body')
@@ -184,7 +214,7 @@ function getIpMac() {
     return true
 }
 
-let dataHandle = function(hub, data) {
+let dataHandle = function (hub, data) {
     if (data !== ':keep-alive') {
         _data = JSON.parse(data)
         dd = (dataParse(_data.value))
@@ -193,8 +223,7 @@ let dataHandle = function(hub, data) {
 }
 
 
-
-$('#disconnect').on('click', function() {
+$('#disconnect').on('click', function () {
     if (!getIpMac()) {
         return
     }
@@ -209,7 +238,7 @@ $('#disconnect').on('click', function() {
 })
 
 
-body.delegate('#connect', 'click', function() {
+body.delegate('#connect', 'click', function () {
     //此接口用于连接设备
     console.log('connect clicked');
     if (!getIpMac()) {
@@ -226,7 +255,7 @@ body.delegate('#connect', 'click', function() {
             node: devicesMac,
             type: 'public'
         })
-
+    
 });
 
 function fillData(dataArr, timeArr, data, time) {
@@ -291,7 +320,7 @@ function refChart(type) {
                     data: temperatureData
                 }]
             });
-
+            
             humChart.setOption({
                 xAxis: {
                     data: humDate
@@ -310,6 +339,20 @@ function refChart(type) {
             });
             break;
         case 'ma':
+            magneticChart.setOption({
+                xAxis: {
+                    data: magneticDate
+                },
+                series: [{
+                    data: magneticxData
+                }, {
+                    data: magneticyData
+                }, {
+                    data: magneticzData
+                }, {
+                    data: magnetometerRData
+                }]
+            })
             break
     }
 }
@@ -322,14 +365,14 @@ function notify(value) {
         acczData.shift();
         accDate.shift();
     }
-
+    
     if (gyroDate.length >= 50) {
         gyroxData.shift();
         gyroyData.shift();
         gyrozData.shift();
         gyroDate.shift();
     }
-
+    
     if (lightData.length >= 50) {
         lightData.shift();
         lightDate.shift();
@@ -341,6 +384,14 @@ function notify(value) {
         humDate.shift();
         pressureData.shift();
         pressureDate.shift();
+    }
+    
+    if (magneticxData.length >= 50) {
+        magnetometerRData.shift();
+        magneticxData.shift();
+        magneticyData.shift();
+        magneticzData.shift();
+        magneticDate.shift();
     }
     let date = new Date(value.time);
     let dateStr = [date.getHours(), date.getMinutes(), date.getSeconds()].join(':');
@@ -356,8 +407,7 @@ function notify(value) {
             gyroxData.push(value.gyro[0])
             gyroyData.push(value.gyro[1])
             gyrozData.push(value.gyro[2])
-
-            refChart(value.type);
+            
             break;
         case 'en':
             lightData.push(value.light);
@@ -371,17 +421,21 @@ function notify(value) {
             pressureData.push(value.pressure);
             pressureDate.push(dateStr);
             
-            refChart(value.type);
             break;
         case 'ma':
+            magneticDate.push(dateStr);
+            magneticxData.push(value.ma[0])
+            magneticyData.push(value.ma[1])
+            magneticzData.push(value.ma[2])
+            magnetometerRData.push(value.mar)
+            
             break;
-
     }
+    refChart(value.type);
 }
 
 
-
-let writeSpecialValue = function(e, args) {
+let writeSpecialValue = function (e, args) {
     api.write({
         node: devicesMac,
         handle: 57,
@@ -399,8 +453,8 @@ let writeSpecialValue = function(e, args) {
     })
 };
 
-let dataParse = function(str) {
-    let reverseByte = function(str) {
+let dataParse = function (str) {
+    let reverseByte = function (str) {
         let temp = '',
             i = str.length
         for (i; i >= 2; i -= 2) {
@@ -408,21 +462,21 @@ let dataParse = function(str) {
         }
         return temp
     }
-    let splitString = function(str, byte1, byte2) {
+    let splitString = function (str, byte1, byte2) {
         function sum(arr, index) {
             let _arr = arr.slice(0, index)
             if (_arr.length !== 0) {
-                return _arr.reduce(function(prev, cur, index, arr) {
+                return _arr.reduce(function (prev, cur, index, arr) {
                     return prev + cur
                 })
             }
             return 0
         }
-
+        
         let temp = [],
             byteArr = Array.prototype.slice.call(arguments, 1),
             length = byteArr.length
-        byteArr = byteArr.map(function(item) {
+        byteArr = byteArr.map(function (item) {
             return item * 2
         })
         for (let i = 0; i < length; i++) {
@@ -430,9 +484,8 @@ let dataParse = function(str) {
         }
         return temp
     }
-
-
-
+    
+    
     let _data = null,
         hiData = [],
         lowData1 = [],
@@ -450,11 +503,11 @@ let dataParse = function(str) {
         magnetometerR = [],
         ledStatus = [],
         temp = str.substr(0, 2)
-
-
+    
+    
     if (temp === '01') {
         lowData1.push(str.substring(2))
-        lowData1.forEach(function(item, index) {
+        lowData1.forEach(function (item, index) {
             let temp = splitString(item, 4, 1, 4, 4, 4, 1, 1)
             light.push(temp[0] / 1000)
             noise.push(temp[1])
@@ -473,11 +526,11 @@ let dataParse = function(str) {
             hum: hum[0],
             temperature: temperature[0]
         }
-
+        
     }
     if (temp === '02') {
         lowData2.push(str.substring(2))
-        lowData2.forEach(function(item, index) {
+        lowData2.forEach(function (item, index) {
             let temp = splitString(item, 2, 2, 2, 2, 1)
             magnetometer.push({
                 x: temp[0],
@@ -492,7 +545,7 @@ let dataParse = function(str) {
                 z: temp[2]
             })
         })
-
+        
         return {
             time: new Date().getTime(),
             type: 'ma',
@@ -500,9 +553,9 @@ let dataParse = function(str) {
             mar: magnetometerR[0]
         }
     }
-
+    
     hiData.push(str)
-    hiData.forEach(function(item, index) {
+    hiData.forEach(function (item, index) {
         acc.push({
             x: parseInt(reverseByte(item.substr(0, 4)), 16) / 1000,
             y: parseInt(reverseByte(item.substr(4, 4)), 16) / 1000,
@@ -514,19 +567,19 @@ let dataParse = function(str) {
             z: parseInt(reverseByte(item.substr(8, 4)), 16) / 1000
         });
         gyro.push({
-            x: parseInt(reverseByte(item.substr(12, 4)), 16)/1000,
-            y: parseInt(reverseByte(item.substr(16, 4)), 16)/1000,
-            z: parseInt(reverseByte(item.substr(20, 4)), 16)/1000
+            x: parseInt(reverseByte(item.substr(12, 4)), 16) / 1000,
+            y: parseInt(reverseByte(item.substr(16, 4)), 16) / 1000,
+            z: parseInt(reverseByte(item.substr(20, 4)), 16) / 1000
         })
-
-
+        
+        
         console.log('gyro', {
-            x: parseInt(reverseByte(item.substr(12, 4)), 16)/1000,
-            y: parseInt(reverseByte(item.substr(16, 4)), 16)/1000,
-            z: parseInt(reverseByte(item.substr(20, 4)), 16)/1000
+            x: parseInt(reverseByte(item.substr(12, 4)), 16) / 1000,
+            y: parseInt(reverseByte(item.substr(16, 4)), 16) / 1000,
+            z: parseInt(reverseByte(item.substr(20, 4)), 16) / 1000
         });
     })
-
+    
     return {
         time: new Date().getTime(),
         type: 'ag',

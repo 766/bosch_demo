@@ -5,51 +5,117 @@
     <meta charset="UTF-8">
     <title>Document</title>
     <style>
-        .chart-style {
-            width: 400px;
-            height: 300px;
+        .clearfix:after {
+            content: ".";
+            display: block;
+            height: 0;
+            clear: both;
+            visibility: hidden
+        }
+        
+        .clearfix {
+            *+height: 1%;
+        }
+        
+        .graphic {
+            margin-top: 20px;
+        }
+        
+        .graphic .chart .pic {
+            width: 350px;
+            height: 250px;
             float: left;
         }
         
-        .body-style {
-            filter: alpha(opacity=10);
-            -moz-opacity: 0.1;
-            -khtml-opacity: 0.1;
-            opacity: 0.1;
-            height: 100%;
-            width: 100%;
-            position: absolute;
-            background: url('boschLogo.png') no-repeat left top;
-            z-index: -1;
+        .chart h2,
+        .chart span {
+            /*float: left;*/
+        }
+        
+        .chart .message h2,
+        .chart .message span,
+        .chart .message i {
+            display: inline-block;
+        }
+        
+        .bgc {
+            height: 90%;
+            width: 90%;
+            position: fixed;
+            background: url('boschLogo.png') no-repeat center;
+            opacity: .1;
+        }
+        
+        input {
+            margin-right: 10px;
+        }
+        
+        #config label {
+            margin-right: 10px;
+        }
+        
+        #hub_ip,
+        #device_mac,
+        #device_name {
+            width: 150px;
+            height: 20px;
+            line-height: 20px;
+            font-size: 18px;
+        }
+        
+        button {
+            display: inline-block;
+            font-size: 18px;
+            line-height: 20px;
+            margin-right: 10px;
+        }
+        
+        .chart .message .hidden,
+        .hidden {
+            display: none;
         }
     </style>
 </head>
 
 <body>
-<div class="body-style">
-</div>
-<div style="z-index: 2;opacity: 1">
     <div id="config">
-        <label for="hub_ip"></label><input id="hub_ip" placeholder="please type the hub ip">
-        <label for="device_mac"></label><input id="device_mac" placeholder="please type the device mac">
+        <label for="hub_ip">Hub IP</label><input id="hub_ip" placeholder="type the hub ip">
+        <label for="device_name">Device Name</label><input id="device_name" placeholder="type the device name">
+        <label for="frequency">Sampling Frequency</label><input id="frequency" type="range" min="1" max="50" step="1" value="10">
+        <span id="frequencyData">10</span>HZ
+        <label for="frequency">Refresh Rate</label><input type="range" id="refresh" min="1" max="50" step="1" value="1">
+        <span id="refreshData">1</span>HZ
         <button id="connect">connect</button>
-        <button id="disconnect">disconnect</button>
+        <button id="disconnect" class="hidden">disconnect</button>
     </div>
-    <div id="acc" class='chart-style'></div>
-    <div id="gyro" class='chart-style'></div>
-    <div id="light" class='chart-style'></div>
-    <div id="noise" class='chart-style'></div>
-    <div id="temperature" class='chart-style'></div>
-    <div id="hum" class='chart-style'></div>
-    <div id="pressure" class='chart-style'></div>
-    <div id="magnetic" class='chart-style'></div>
-
-</div>
-
-<script src='js/zepto.js'></script>
-<script src="js/echarts.js"></script>
-<script src='js/api.js'></script>
-<script src='js/index.js'></script>
+    <div class="graphic clearfix" id="graphic">
+        <div class="bgc"></div>
+        <div class="chart clearfix" data-mac=''>
+            <div class="message">
+                <h2>XDK1&nbsp;</h2>
+                <span class="name"></span>
+                <b>Mac:</b>
+                <span class="hidden">状态:</span>
+                <span class="status hidden">在线</span>
+                <i>收到数据包:</i>
+                <span class="packNum">0</span>个
+                <time></time>
+            </div>
+            <div class="acc pic"></div>
+            <div class="gyro pic"></div>
+            <div class="light pic"></div>
+            <div class="noise pic"></div>
+            <div class="temperature pic"></div>
+            <div class="hum pic"></div>
+            <div class="pressure pic"></div>
+            <div class="magnetic pic"></div>
+        </div>
+    </div>
+    </div>
+    <script src='js/zepto.js'></script>
+    <script src="js/echarts.js"></script>
+    <script src='js/api.js'></script>
+    <script src='js/index.js'></script>
 </body>
 
 </html>

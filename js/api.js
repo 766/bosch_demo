@@ -98,6 +98,7 @@
     api.scan = function(chip) {
         __es(api.scan, api.server + '/gap/nodes/?event=1&mac=' + api.hub + '&chip=' + (chip || 0) + '&access_token=' + api.access_token,
             function(event) {
+             
                 api.trigger('scan', [api.hub, event.data])
             });
         return api
@@ -118,6 +119,7 @@
                 "type": o.type || "public"
             },
             success: function(data) {
+                // debugger
                 console.log(data)
                 o.success && o.success(o.hub || api.hub, o.node, data)
                 api.trigger('conn', [o.hub || api.hub, o.node, data])
@@ -223,6 +225,7 @@
             api.sse.notify=true
             __es(api.notify, api.server + '/gatt/nodes/?event=1&mac=' + api.hub + '&access_token=' + api.access_token,
                 function(event) {
+                    // console.log(event)
                     api.trigger('notify', [api.hub, event.data])
                 })
         } else {

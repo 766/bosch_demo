@@ -30,7 +30,7 @@ Zepto(function ($) {
 
 	let device = {
 		fre1: '64000000',
-		fre2: '100',
+		fre2: 1000,
 		temp: {},
 		newItem: false
 	}
@@ -44,7 +44,7 @@ Zepto(function ($) {
 	$('#refresh').on('change', function () {
 		$('#refreshData').html(this.value)
 		device.fre2 = Math.floor(1000 / this.value)
-		// console.log(device.fre2)
+		console.log(device.fre2)
 
 	})
 	let lsbToMsb = function (string, totalbyte) {
@@ -486,7 +486,10 @@ Zepto(function ($) {
 			}, 1000)
 		}
 		if (new Date() - device[mac].lastnotify < device.fre2)
-			return
+			{
+				console.log('丢弃数据')
+				return
+			}
 		device[mac].lastnotify = new Date()
 		let accxData = device[mac].accxData,
 			accyData = device[mac].accyData,
@@ -681,23 +684,28 @@ Zepto(function ($) {
 
 	let writeSpecialValue = function (mac) {
 		// device[arg[1]].connect=true
+		// api.write({
+		// 	node: mac,
+		// 	handle: 59,
+		// 	value: device.fre1,
+		// 	success: function () {
+		// 		api.write({
+		// 			node: mac,
+		// 			handle: 57,
+		// 			value: '01'
+		// 		});
+		// 		api.write({
+		// 			node: mac,
+		// 			handle: 65,
+		// 			value: '01'
+		// 		})
+		// 	}
+		// });
 		api.write({
-			node: mac,
-			handle: 59,
-			value: device.fre1,
-			success: function () {
-				api.write({
-					node: mac,
-					handle: 57,
-					value: '01'
-				});
-				api.write({
-					node: mac,
-					handle: 65,
-					value: '01'
-				})
-			}
-		});
+			node:mac,
+			handle:59,
+			value:device.fre1
+		})
 
 	};
 

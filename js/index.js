@@ -475,6 +475,9 @@ Zepto(function ($) {
 
 
 	function notify(value, mac) {
+		// debugger
+		if (typeof device[mac] === 'undefined')
+			return
 		device[mac].mes.counts.innerHTML = ++device[mac].mes.mesCounts
 		if (device[mac].lastnotify === 0) {
 			let time = 0;
@@ -485,11 +488,10 @@ Zepto(function ($) {
 				// $(`.chart[data-mac='${mac}']`).find('time')[0].innerHTML = time + 's'
 			}, 1000)
 		}
-		if (new Date() - device[mac].lastnotify < device.fre2)
-			{
-				console.log('丢弃数据')
-				return
-			}
+		if (new Date() - device[mac].lastnotify < device.fre2) {
+			console.log('丢弃数据')
+			return
+		}
 		device[mac].lastnotify = new Date()
 		let accxData = device[mac].accxData,
 			accyData = device[mac].accyData,
@@ -702,9 +704,9 @@ Zepto(function ($) {
 		// 	}
 		// });
 		api.write({
-			node:mac,
-			handle:59,
-			value:device.fre1
+			node: mac,
+			handle: 59,
+			value: device.fre1
 		})
 
 	};
@@ -844,6 +846,69 @@ Zepto(function ($) {
 			gyro: [gyro[0].x, gyro[0].y, gyro[0].z]
 		}
 	}
+
+
+	/**
+	 * 
+	 * 
+	 * @param {any} sensorNum 
+	 * @param {any} addInterval 
+	 */
+	function virtualMoreSensor(sensorNum, nameArr, addInterval) {
+
+
+		/**
+		 * @param {number} sensorNum 虚拟MAC的个数
+		 */
+		let creatSensorNumMac = function (sensorNum) {
+				let macArr = [],
+					temp, tempArr
+				for (let i = 0; i < sensorNum * 6; i++) {
+					temp = (Math.floor(Math.random() * 256)).toString(16)
+					temp = temp.toUpperCase()
+					temp = temp.length < 2 ? '0' + temp : temp
+					tempArr = macArr[parseInt(i / 6, 10)]
+					if (typeof tempArr === 'undefined') {
+						macArr.push(temp)
+						tempArr = macArr[macArr.length - 1]
+					} else {
+						macArr[parseInt(i / 6, 10)] += ':' + temp
+					}
+				}
+				return macArr
+			},
+			virtualMacArr, timer = null,
+			mac
+
+
+
+		virtualMacArr = creatSensorNumMac(sensorNum)
+		timer && clearInterval(timer)
+		timer = setInterval(function () {
+			if (Object.keys(device).length === 6) {
+				clearInterval(timer)
+				timer = setInterval(function () {
+					if (virtualMacArr.length !== 0) {
+						mac = virtualMacArr.shift()
+						device[mac] = {
+							name: nameArr[index],
+							created: false
+						}
+						createChart(++connectNum, nameArr[index], mac)
+
+					} else {
+						clearInterval(timer)
+					}
+				}, addInterval + Math.floor(Math.random() * 2000))
+
+
+			}
+
+		}, 1000)
+	}
+	virtualMoreSensor(3,['wang','ran','wangg'],1000)
+
+
 
 
 })

@@ -32,6 +32,8 @@ Zepto(function ($) {
 		fre1: '64000000',
 		fre2: 1000,
 		temp: {},
+		virtualSensor: [],
+		macRouterMap: {},
 		newItem: false
 	}
 	$('#frequency').on('change', function () {
@@ -343,7 +345,8 @@ Zepto(function ($) {
 		if (data !== 'keep-alive') {
 			let _data = JSON.parse(data)
 			dd = dataParse(_data.value, _data.id)
-			notify(dd, _data.id)
+			debugger
+			notify(dd)
 		}
 	}
 
@@ -384,7 +387,7 @@ Zepto(function ($) {
 				if (i.indexOf(':') > -1 && !device[i].connect) {
 					let lastConnect = device[i].lastConnect
 
-					if (lastConnect && (newConnect - lastConnect <= 3000))
+					if (lastConnect && (newConnect - lastConnect <= 5000))
 						return
 					device[i].lastConnect = newConnect
 					console.log('正在连接', i)
@@ -474,8 +477,9 @@ Zepto(function ($) {
 
 
 
-	function notify(value, mac) {
+	function notify(value) {
 		// debugger
+		let mac = value.id
 		if (typeof device[mac] === 'undefined')
 			return
 		device[mac].mes.counts.innerHTML = ++device[mac].mes.mesCounts
@@ -878,24 +882,28 @@ Zepto(function ($) {
 				return macArr
 			},
 			virtualMacArr, timer = null,
-			mac
+			mac, index = 0
 
 
 
 		virtualMacArr = creatSensorNumMac(sensorNum)
 		timer && clearInterval(timer)
 		timer = setInterval(function () {
-			if (Object.keys(device).length === 6) {
+			if (connectNum === 3) {
 				clearInterval(timer)
 				timer = setInterval(function () {
 					if (virtualMacArr.length !== 0) {
+						debugger
 						mac = virtualMacArr.shift()
 						device[mac] = {
 							name: nameArr[index],
-							created: false
+							created: false,
+							connect: true,
+							virtual: true
 						}
+						device.virtualSensor.push(mac)
 						createChart(++connectNum, nameArr[index], mac)
-
+						index++
 					} else {
 						clearInterval(timer)
 					}
@@ -906,7 +914,75 @@ Zepto(function ($) {
 
 		}, 1000)
 	}
-	virtualMoreSensor(3,['wang','ran','wangg'],1000)
+
+	function createVirtualData(data) {
+		let _data = $.extend(true, {}, data)
+		_data.time += randomData(2000, 4000)
+
+		function randomData(min = 0, max = 5) {
+			return Math.floor(Math.random() * (max - min) + min)
+		}
+		for (let k in _data) {
+			let min = 0,
+				max = 5
+			if (_data[k] instanceof Array) {
+				if (k === 'acc') {
+					min = 0
+					max = 5
+				} else if (k === 'gyro') {
+					min = 0
+					max = 3
+				} else if (k === 'ma') {
+					min = 0
+					max = 10
+				}
+				_data[k].map(item => item + randomData(min, max))
+			} else if (k === 'mar') {
+				_data[k] += randomData(0, 20)
+			} else if (k === 'light') {
+				_data[k] += randomData(0, 10)
+			} else if (k === 'pressure' || k === 'temperature') {
+				_data[k] += Math.random()
+			}
+		}
+		return _data
+	}
+
+	function createVirtualDataControl(data) {
+		let singleMacMappingNum = parseInt(sensorNum / 3),
+			connectedDeviceArr = (function (device) {
+				let n = 0,
+					arr = [],
+
+					for (let i in device) {
+						if (i.indexOf(':') > -1 && device[i].connect && !device[i].virtual) {
+							n++
+							arr.push(i)
+						}
+					}
+				return {
+					arr,
+					n
+				}
+			})(),
+			n = 0
+		while (device.virtualSensor.length > 0) {
+			if (device.macRouterMap[n].length < singleMacMappingNum) {
+				device.macRouterMap[n].push(device.virtualSensor.shift())
+			} else {
+				n++
+				if (device.macRouterMap.length < n) {
+					n--
+				}
+			}
+
+		}
+
+
+
+	}
+	virtualMoreSensor(3, ['wang', 'ran', 'wangg'], 1000)
+
 
 
 

@@ -345,13 +345,13 @@ Zepto(function ($) {
 		localStorage.setItem('bosch', JSON.stringify([hubIP, devicesName]))
 		return true
 	}
-
+	let nameInit = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M']
 	let dataHandle = function (hub, data) {
 		if (data !== 'keep-alive') {
 			let _data = JSON.parse(data)
 			dd = dataParse(_data.value, _data.id)
 			notify(dd)
-			virtualSensor(dd, notify, 3, ['A', 'B', 'C'], 1000)
+			virtualSensor(dd, notify, 13, nameInit, 1000)
 		}
 	}
 
@@ -906,7 +906,7 @@ Zepto(function ($) {
 						created: false,
 						connect: true,
 						virtual: true,
-						lastnotify:{},
+						lastnotify: {},
 						mes: {
 							mesCounts: 0,
 							counts: $('.packNum')[connectNum + device.virtualSensor.length - 1]
@@ -962,12 +962,12 @@ Zepto(function ($) {
 	}
 
 	function createVirtualDataControl(virtualMac) {
-		// debugger
+		debugger
 		let mac = device.real2[tempIndex]
 		if (!device.macRouterMap[mac]) {
 			device.macRouterMap[mac] = []
-			device.macRouterMap[mac].push(virtualMac)
 		}
+		device.macRouterMap[mac].push(virtualMac)
 		tempIndex++
 		if (tempIndex === device.real2.length) {
 			tempIndex = 0
@@ -993,7 +993,6 @@ Zepto(function ($) {
 			// debugger
 			virtualMoreSensor(sensorNum, nameArr, addInterval)
 			virtualData = createVirtualData(data)
-			console.log(virtualData)
 			publisVirtualhData(virtualData, notify)
 		}
 	}

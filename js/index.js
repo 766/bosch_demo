@@ -26,13 +26,18 @@ Zepto(function ($) {
 			magneticzData: [],
 			magnetometerRData: []
 		},
-		connectNum = 0
+		connectNum = 0,
+		tempIndex = 0
 
 	let device = {
 		fre1: '64000000',
 		fre2: 1000,
-		temp: {},
-		virtualSensor: [],
+		real: {
+			temp: {}
+		},
+		real2: [], //真实的mac
+		virtualSensor: [], //添加的chart的virtual Mac会在这里
+		virtualMacArr: false, //总的virtual MAC 会shift头mac
 		macRouterMap: {},
 		newItem: false
 	}
@@ -74,14 +79,14 @@ Zepto(function ($) {
 	let chartInit = function (n, mac) {
 		let _mac = mac || 'temp',
 			_n = n - 1
-		device[_mac].accChart = echarts.init($('.acc')[_n])
-		device[_mac].gyroChart = echarts.init($('.gyro')[_n])
-		device[_mac].lightChart = echarts.init($('.light')[_n])
-		device[_mac].noiseChart = echarts.init($('.noise')[_n])
-		device[_mac].temperatureChart = echarts.init($('.temperature')[_n])
-		device[_mac].humChart = echarts.init($('.hum')[_n])
-		device[_mac].pressureChart = echarts.init($('.pressure')[_n])
-		device[_mac].magneticChart = echarts.init($('.magnetic')[_n]);
+		device.real[_mac].accChart = echarts.init($('.acc')[_n])
+		device.real[_mac].gyroChart = echarts.init($('.gyro')[_n])
+		device.real[_mac].lightChart = echarts.init($('.light')[_n])
+		device.real[_mac].noiseChart = echarts.init($('.noise')[_n])
+		device.real[_mac].temperatureChart = echarts.init($('.temperature')[_n])
+		device.real[_mac].humChart = echarts.init($('.hum')[_n])
+		device.real[_mac].pressureChart = echarts.init($('.pressure')[_n])
+		device.real[_mac].magneticChart = echarts.init($('.magnetic')[_n]);
 		(function () {
 			let tooltip = {
 				trigger: 'axis',
@@ -107,7 +112,7 @@ Zepto(function ($) {
 				data: []
 			};
 
-			device[_mac].accChart.setOption({
+			device.real[_mac].accChart.setOption({
 				title: {
 					text: '加速度'
 				},
@@ -137,7 +142,7 @@ Zepto(function ($) {
 				}]
 			});
 
-			device[_mac].gyroChart.setOption({
+			device.real[_mac].gyroChart.setOption({
 				title: {
 					text: '陀螺仪'
 				},
@@ -162,7 +167,7 @@ Zepto(function ($) {
 				}]
 			});
 
-			device[_mac].lightChart.setOption({
+			device.real[_mac].lightChart.setOption({
 				title: {
 					text: '光照'
 				},
@@ -178,7 +183,7 @@ Zepto(function ($) {
 					sampling: 'average'
 				}]
 			});
-			device[_mac].noiseChart.setOption({
+			device.real[_mac].noiseChart.setOption({
 				title: {
 					text: '声感'
 				},
@@ -194,7 +199,7 @@ Zepto(function ($) {
 					sampling: 'average'
 				}]
 			});
-			device[_mac].temperatureChart.setOption({
+			device.real[_mac].temperatureChart.setOption({
 				title: {
 					text: '温度'
 				},
@@ -210,7 +215,7 @@ Zepto(function ($) {
 					sampling: 'average'
 				}]
 			});
-			device[_mac].humChart.setOption({
+			device.real[_mac].humChart.setOption({
 				title: {
 					text: '湿度'
 				},
@@ -226,7 +231,7 @@ Zepto(function ($) {
 					sampling: 'average'
 				}]
 			});
-			device[_mac].pressureChart.setOption({
+			device.real[_mac].pressureChart.setOption({
 				title: {
 					text: '压力'
 				},
@@ -242,7 +247,7 @@ Zepto(function ($) {
 					sampling: 'average'
 				}]
 			});
-			device[_mac].magneticChart.setOption({
+			device.real[_mac].magneticChart.setOption({
 				title: {
 					text: '磁感'
 				},
@@ -270,7 +275,7 @@ Zepto(function ($) {
 					sampling: 'average'
 				}]
 			})
-			_mac === 'temp' ? device[_mac].created = true : 0;
+			_mac === 'temp' ? device.real[_mac].created = true : 0;
 		})()
 	}
 
@@ -306,7 +311,7 @@ Zepto(function ($) {
 		if (chartList[0].dataset.mac === '') {
 			chartList[0].dataset.mac = mac
 			$(chartList[0]).find('span')[0].innerHTML = name
-			device[mac].created = true
+			device.real[mac].created = true
 		} else {
 			$('#graphic').append(chartHtmlStr())
 			chartInit(n, mac)
@@ -345,9 +350,8 @@ Zepto(function ($) {
 		if (data !== 'keep-alive') {
 			let _data = JSON.parse(data)
 			dd = dataParse(_data.value, _data.id)
-			// debugger
 			notify(dd)
-			virtualSensor(_data, notify, 6, ['A', 'B', 'C', 'D', 'E', 'F'], 1000)
+			virtualSensor(dd, notify, 3, ['A', 'B', 'C'], 1000)
 		}
 	}
 
@@ -364,9 +368,9 @@ Zepto(function ($) {
 				mac = data.bdaddrs[0].bdaddr,
 				type = data.bdaddrs[0].bdaddrType
 			if (data.name === devicesName || data.name === deviceNameInit) {
-				if (!device[mac]) {
+				if (!device.real[mac]) {
 					device.newItem = true
-					device[mac] = {
+					device.real[mac] = {
 						name: data.name,
 						type: type,
 						connect: false,
@@ -374,8 +378,8 @@ Zepto(function ($) {
 						lastConnect: 1
 					}
 					if (connectNum === 0) {
-						$.extend(true, device[data.bdaddrs[0].bdaddr], device.temp)
-						delete device.temp
+						$.extend(true, device.real[mac], device.real.temp)
+						delete device.real.temp
 					}
 				}
 			}
@@ -384,34 +388,34 @@ Zepto(function ($) {
 		if (device.newItem) {
 			// device.newItem = false
 			let newConnect = new Date().getTime()
-			for (let i in device) {
-				if (i.indexOf(':') > -1 && !device[i].connect) {
-					let lastConnect = device[i].lastConnect
-
+			for (let i in device.real) {
+				if (!device.real[i].connect) {
+					let lastConnect = device.real[i].lastConnect
 					if (lastConnect && (newConnect - lastConnect <= 5000))
 						return
-					device[i].lastConnect = newConnect
+					device.real[i].lastConnect = newConnect
 					console.log('正在连接', i)
 					api.conn({
 						node: i,
-						type: device[i].type,
+						type: device.real[i].type,
 						success: function (hub, mac, data) {
 							//防止连接多次 多次返回连接成功  多次执行本函数
-							if (device[mac].connect)
+							if (device.real[mac].connect)
 								return
-							device[mac].connect = true
+							device.real[mac].connect = true
+							device.real2.push(mac)
 							connectNum = connectedDeviceCount(device)
 							if (connectNum === 1) {
 								$('#graphic .message').eq(0).children('b').html(`Mac:${mac}`)
 								$('#graphic .chart')[0].dataset.mac = i
-								$('#graphic .name')[0].innerHTML = device[i].name
+								$('#graphic .name')[0].innerHTML = device.real[i].name
 							} else {
-								!device[mac].created && createChart(connectNum, device[i].name, mac)
+								!device.real[mac].created && createChart(connectNum, device.real[i].name, mac)
 							}
 
-							$.extend(true, device[mac], deviceDataInit)
-							device[mac].lastnotify = 0
-							device[mac].mes = {
+							$.extend(true, device.real[mac], deviceDataInit)
+							device.real[mac].lastnotify = {}
+							device.real[mac].mes = {
 								mesCounts: 0,
 								counts: $('.packNum')[connectNum - 1]
 							}
@@ -426,8 +430,8 @@ Zepto(function ($) {
 
 	let connectedDeviceCount = function (device) {
 		let n = 0;
-		for (let i in device) {
-			if (i.indexOf(':') > -1 && device[i].connect) {
+		for (let i in device.real) {
+			if (device.real[i].connect && !device.real[i].virtual) {
 				n++
 			}
 		}
@@ -481,46 +485,51 @@ Zepto(function ($) {
 	function notify(value) {
 		// debugger
 		let mac = value.id
-		if (typeof device[mac] === 'undefined')
+		if (typeof device.real[mac] === 'undefined')
 			return
-		device[mac].mes.counts.innerHTML = ++device[mac].mes.mesCounts
-		if (device[mac].lastnotify === 0) {
+		device.real[mac].mes.counts.innerHTML = ++device.real[mac].mes.mesCounts
+		if (!device.real[mac].lastnotify[value.type]) {
+			device.real[mac].lastnotify[value.type] = 0
+		}
+
+
+		if (device.real[mac].lastnotify === 0) {
 			let time = 0;
 			setInterval(function () {
 				time++
-				// debugger
-				$(`.chart[data-mac='${mac}']`).find('time')[0].innerHTML = `${time}s  ${(device[mac].mes.mesCounts/time).toFixed(2)}个/s`
+				debugger
+				$(`.chart[data-mac='${mac}']`).find('time')[0].innerHTML = `${time}s  ${(device.real[mac].mes.mesCounts/time).toFixed(2)}个/s`
 				// $(`.chart[data-mac='${mac}']`).find('time')[0].innerHTML = time + 's'
 			}, 1000)
 		}
-		if (new Date() - device[mac].lastnotify < device.fre2) {
+		if (new Date() - device.real[mac].lastnotify[value.type] < device.fre2) {
 			console.log('丢弃数据')
 			return
 		}
-		device[mac].lastnotify = new Date()
-		let accxData = device[mac].accxData,
-			accyData = device[mac].accyData,
-			acczData = device[mac].acczData,
-			accDate = device[mac].accDate,
-			gyroxData = device[mac].gyroxData,
-			gyroyData = device[mac].gyroyData,
-			gyrozData = device[mac].gyrozData,
-			gyroDate = device[mac].gyroDate,
-			lightData = device[mac].lightData,
-			lightDate = device[mac].lightDate,
-			noiseData = device[mac].noiseData,
-			noiseDate = device[mac].noiseDate,
-			temperatureData = device[mac].temperatureData,
-			temperatureDate = device[mac].temperatureDate,
-			humData = device[mac].humData,
-			humDate = device[mac].humDate,
-			pressureData = device[mac].pressureData,
-			pressureDate = device[mac].pressureDate,
-			magneticDate = device[mac].magneticDate,
-			magneticxData = device[mac].magneticxData,
-			magneticyData = device[mac].magneticyData,
-			magneticzData = device[mac].magneticzData,
-			magnetometerRData = device[mac].magnetometerRData;
+		device.real[mac].lastnotify[value.type] = new Date()
+		let accxData = device.real[mac].accxData,
+			accyData = device.real[mac].accyData,
+			acczData = device.real[mac].acczData,
+			accDate = device.real[mac].accDate,
+			gyroxData = device.real[mac].gyroxData,
+			gyroyData = device.real[mac].gyroyData,
+			gyrozData = device.real[mac].gyrozData,
+			gyroDate = device.real[mac].gyroDate,
+			lightData = device.real[mac].lightData,
+			lightDate = device.real[mac].lightDate,
+			noiseData = device.real[mac].noiseData,
+			noiseDate = device.real[mac].noiseDate,
+			temperatureData = device.real[mac].temperatureData,
+			temperatureDate = device.real[mac].temperatureDate,
+			humData = device.real[mac].humData,
+			humDate = device.real[mac].humDate,
+			pressureData = device.real[mac].pressureData,
+			pressureDate = device.real[mac].pressureDate,
+			magneticDate = device.real[mac].magneticDate,
+			magneticxData = device.real[mac].magneticxData,
+			magneticyData = device.real[mac].magneticyData,
+			magneticzData = device.real[mac].magneticzData,
+			magnetometerRData = device.real[mac].magnetometerRData;
 		//收到数据后调用这个接口通知我
 		// debugger
 		if (accDate.length >= 10) {
@@ -599,7 +608,7 @@ Zepto(function ($) {
 		function refChart(type) {
 			switch (type) {
 				case 'ag':
-					device[mac].accChart.setOption({
+					device.real[mac].accChart.setOption({
 						xAxis: {
 							data: accDate
 						},
@@ -611,7 +620,7 @@ Zepto(function ($) {
 							data: acczData
 						}]
 					});
-					device[mac].gyroChart.setOption({
+					device.real[mac].gyroChart.setOption({
 						xAxis: {
 							data: gyroDate
 						},
@@ -625,7 +634,7 @@ Zepto(function ($) {
 					});
 					break;
 				case 'en':
-					device[mac].lightChart.setOption({
+					device.real[mac].lightChart.setOption({
 						xAxis: {
 							data: lightDate
 						},
@@ -633,7 +642,7 @@ Zepto(function ($) {
 							data: lightData
 						}]
 					});
-					device[mac].noiseChart.setOption({
+					device.real[mac].noiseChart.setOption({
 						xAxis: {
 							data: noiseDate
 						},
@@ -641,7 +650,7 @@ Zepto(function ($) {
 							data: noiseData
 						}]
 					});
-					device[mac].temperatureChart.setOption({
+					device.real[mac].temperatureChart.setOption({
 						xAxis: {
 							data: temperatureDate
 						},
@@ -650,7 +659,7 @@ Zepto(function ($) {
 						}]
 					});
 
-					device[mac].humChart.setOption({
+					device.real[mac].humChart.setOption({
 						xAxis: {
 							data: humDate
 						},
@@ -658,7 +667,7 @@ Zepto(function ($) {
 							data: humData
 						}]
 					});
-					device[mac].pressureChart.setOption({
+					device.real[mac].pressureChart.setOption({
 						xAxis: {
 							data: pressureDate
 						},
@@ -668,7 +677,7 @@ Zepto(function ($) {
 					});
 					break;
 				case 'ma':
-					device[mac].magneticChart.setOption({
+					device.real[mac].magneticChart.setOption({
 						xAxis: {
 							data: magneticDate
 						},
@@ -781,6 +790,7 @@ Zepto(function ($) {
 				buttonStatus.push(temp[6])
 			})
 			return {
+				id: id,
 				time: new Date().getTime(),
 				type: 'en',
 				light: light[0],
@@ -810,6 +820,7 @@ Zepto(function ($) {
 			})
 
 			return {
+				id: id,
 				time: new Date().getTime(),
 				type: 'ma',
 				ma: [magnetometer[0].x, magnetometer[0].y, magnetometer[0].z],
@@ -883,29 +894,38 @@ Zepto(function ($) {
 				return macArr
 			},
 			virtualMacArr, timer = null,
-			mac, index = 0
-
-
-
-		virtualMacArr = creatSensorNumMac(sensorNum)
-		timer && clearInterval(timer)
-		timer = setInterval(function () {
-			if (virtualMacArr.length !== 0) {
-				debugger
-				mac = virtualMacArr.shift()
-				device[mac] = {
-					name: nameArr[index],
-					created: false,
-					connect: true,
-					virtual: true
+			virtualMac, index = 0
+		if (device.virtualMacArr === false) {
+			device.virtualMacArr = []
+			device.virtualMacArr = creatSensorNumMac(sensorNum)
+			timer = setInterval(function () {
+				if (device.virtualMacArr.length !== 0) {
+					virtualMac = device.virtualMacArr.shift()
+					device.real[virtualMac] = {
+						name: nameArr[index],
+						created: false,
+						connect: true,
+						virtual: true,
+						lastnotify:{},
+						mes: {
+							mesCounts: 0,
+							counts: $('.packNum')[connectNum + device.virtualSensor.length - 1]
+						}
+					}
+					$.extend(true, device.real[virtualMac], deviceDataInit)
+					device.virtualSensor.push(virtualMac)
+					createChart(connectNum + device.virtualSensor.length, nameArr[index], virtualMac)
+					createVirtualDataControl(virtualMac)
+					index++
+				} else {
+					// debugger
+					clearInterval(timer)
 				}
-				device.virtualSensor.push(mac)
-				createChart(++connectNum, nameArr[index], mac)
-				index++
-			} else {
-				clearInterval(timer)
-			}
-		}, addInterval + Math.floor(Math.random() * 2000))
+			}, addInterval + Math.floor(Math.random() * 2000))
+		}
+
+
+
 	}
 
 	function createVirtualData(data) {
@@ -933,42 +953,30 @@ Zepto(function ($) {
 			} else if (k === 'mar') {
 				_data[k] += randomData(0, 20)
 			} else if (k === 'light') {
-				_data[k] += randomData(0, 10)
+				// _data[k] += randomData(0, 10)
 			} else if (k === 'pressure' || k === 'temperature') {
-				_data[k] += Math.random()
+				// _data[k] += Math.random()
 			}
 		}
 		return _data
 	}
 
-	function createVirtualDataControl() {
-		let singleMacMappingNum = parseInt(sensorNum / 3),
-			n = 0,
-			connectedDeviceArr = (function (device) {
-				let n = 0,
-					arr = []
-				for (let i in device) {
-					if (i.indexOf(':') > -1 && device[i].connect && !device[i].virtual) {
-						n++
-						arr.push(i)
-					}
-				}
-				return {
-					arr,
-					n
-				}
-			})()
-
-		while (device.virtualSensor.length > 0) {
-			if (device.macRouterMap[n].length < singleMacMappingNum) {
-				device.macRouterMap[n].push(device.virtualSensor.shift())
-			} else if (n < connectedDeviceArr.n) {
-				n++
-			}
+	function createVirtualDataControl(virtualMac) {
+		// debugger
+		let mac = device.real2[tempIndex]
+		if (!device.macRouterMap[mac]) {
+			device.macRouterMap[mac] = []
+			device.macRouterMap[mac].push(virtualMac)
 		}
+		tempIndex++
+		if (tempIndex === device.real2.length) {
+			tempIndex = 0
+		}
+		// debugger
 	}
 
 	function publisVirtualhData(data, notify) {
+		// debugger
 		let mac = data.id
 		if (device.macRouterMap[mac]) {
 			device.macRouterMap[mac].forEach(item => {
@@ -981,9 +989,11 @@ Zepto(function ($) {
 
 	function virtualSensor(data, notify, sensorNum, nameArr, addInterval) {
 		let virtualData
-		if (connectNum === 3 && device.virtualSensor.length === 0 && Object.keys(device).length === sensorNum + 3 + 5) {
+		if (connectNum === 3) {
+			// debugger
 			virtualMoreSensor(sensorNum, nameArr, addInterval)
 			virtualData = createVirtualData(data)
+			console.log(virtualData)
 			publisVirtualhData(virtualData, notify)
 		}
 	}

@@ -345,8 +345,9 @@ Zepto(function ($) {
 		if (data !== 'keep-alive') {
 			let _data = JSON.parse(data)
 			dd = dataParse(_data.value, _data.id)
-			debugger
+			// debugger
 			notify(dd)
+			virtualSensor(_data, notify, 6, ['A', 'B', 'C', 'D', 'E', 'F'], 1000)
 		}
 	}
 
@@ -889,30 +890,22 @@ Zepto(function ($) {
 		virtualMacArr = creatSensorNumMac(sensorNum)
 		timer && clearInterval(timer)
 		timer = setInterval(function () {
-			if (connectNum === 3) {
+			if (virtualMacArr.length !== 0) {
+				debugger
+				mac = virtualMacArr.shift()
+				device[mac] = {
+					name: nameArr[index],
+					created: false,
+					connect: true,
+					virtual: true
+				}
+				device.virtualSensor.push(mac)
+				createChart(++connectNum, nameArr[index], mac)
+				index++
+			} else {
 				clearInterval(timer)
-				timer = setInterval(function () {
-					if (virtualMacArr.length !== 0) {
-						debugger
-						mac = virtualMacArr.shift()
-						device[mac] = {
-							name: nameArr[index],
-							created: false,
-							connect: true,
-							virtual: true
-						}
-						device.virtualSensor.push(mac)
-						createChart(++connectNum, nameArr[index], mac)
-						index++
-					} else {
-						clearInterval(timer)
-					}
-				}, addInterval + Math.floor(Math.random() * 2000))
-
-
 			}
-
-		}, 1000)
+		}, addInterval + Math.floor(Math.random() * 2000))
 	}
 
 	function createVirtualData(data) {
@@ -948,41 +941,52 @@ Zepto(function ($) {
 		return _data
 	}
 
-	function createVirtualDataControl(data) {
+	function createVirtualDataControl() {
 		let singleMacMappingNum = parseInt(sensorNum / 3),
+			n = 0,
 			connectedDeviceArr = (function (device) {
 				let n = 0,
-					arr = [],
-
-					for (let i in device) {
-						if (i.indexOf(':') > -1 && device[i].connect && !device[i].virtual) {
-							n++
-							arr.push(i)
-						}
+					arr = []
+				for (let i in device) {
+					if (i.indexOf(':') > -1 && device[i].connect && !device[i].virtual) {
+						n++
+						arr.push(i)
 					}
+				}
 				return {
 					arr,
 					n
 				}
-			})(),
-			n = 0
+			})()
+
 		while (device.virtualSensor.length > 0) {
 			if (device.macRouterMap[n].length < singleMacMappingNum) {
 				device.macRouterMap[n].push(device.virtualSensor.shift())
-			} else {
+			} else if (n < connectedDeviceArr.n) {
 				n++
-				if (device.macRouterMap.length < n) {
-					n--
-				}
 			}
-
 		}
-
-
-
 	}
-	virtualMoreSensor(3, ['wang', 'ran', 'wangg'], 1000)
 
+	function publisVirtualhData(data, notify) {
+		let mac = data.id
+		if (device.macRouterMap[mac]) {
+			device.macRouterMap[mac].forEach(item => {
+				data.id = item
+				notify(data)
+			})
+		}
+	}
+	// virtualMoreSensor(3, ['wang', 'ran', 'wangg'], 1000)
+
+	function virtualSensor(data, notify, sensorNum, nameArr, addInterval) {
+		let virtualData
+		if (connectNum === 3 && device.virtualSensor.length === 0 && Object.keys(device).length === sensorNum + 3 + 5) {
+			virtualMoreSensor(sensorNum, nameArr, addInterval)
+			virtualData = createVirtualData(data)
+			publisVirtualhData(virtualData, notify)
+		}
+	}
 
 
 
